@@ -5,7 +5,9 @@
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
 
-
+import os
+import zipfile
+import pandas as pd
 def pregunta_01():
     """
     La información requerida para este laboratio esta almacenada en el
@@ -71,3 +73,38 @@ def pregunta_01():
 
 
     """
+    with zipfile.ZipFile("files/input.zip", 'r') as comprimido:
+        comprimido.extractall("files")
+
+    #carpeta de salida
+    os.makedirs("files/output", exist_ok=True)
+
+
+
+    for particion in ["train", "test"]:
+        registros = []
+        base = os.path.join("files", "input", particion)
+        if not os.path.isdir(base):
+            continue
+
+        # Recorremos las carpetas positive/negative/neutral
+        for etiqueta in ["positive", "negative", "neutral"]:
+            ruta_etiqueta = os.path.join(base, etiqueta)
+            if not os.path.isdir(ruta_etiqueta):
+                continue
+            for nombre in os.listdir(ruta_etiqueta):
+                if not nombre.endswith(".txt"):
+                    continue
+                ruta_txt = os.path.join(ruta_etiqueta, nombre)
+                with open(ruta_txt, encoding="utf-8") as f:
+                    texto = f.read().strip()
+                # Aquí usamos "target" en lugar de "sentiment"
+                registros.append({
+                    "phrase": texto,
+                    "target": etiqueta
+                })
+
+        #Guardar CSV 
+        df = pd.DataFrame(registros)
+        df.to_csv(f"files/output/{particion}_dataset.csv", index=False)
+
